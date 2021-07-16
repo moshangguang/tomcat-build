@@ -4,6 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 public class Response {
     private static final int BUFFER_SIZE = 1024;
@@ -31,6 +36,13 @@ public class Response {
         return null;
     }
 
+    public String getTime() {
+        Calendar cd = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT")); // 设置时区为GMT
+        return sdf.format(cd.getTime());
+    }
+
     public void sendStaticResource() throws IOException {
         byte[] bytes = new byte[BUFFER_SIZE];
         FileInputStream fis = null;
@@ -51,7 +63,8 @@ public class Response {
                     msg += "Accept-Ranges: bytes\r\n";
                 }
                 msg += "Content-Type: " + parseContentType() + "\r\n" +
-                        "Content-length: " + content.length() +
+                        "Content-length: " + content.length() + "\r\n" +
+                        "Date: " + getTime() +
                         "\r\n\r\n" + content;
                 output.write(msg.getBytes());
             } else {

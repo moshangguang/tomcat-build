@@ -24,7 +24,7 @@ public class HttpServer {
     public void await() {
         ServerSocket serverSocket = null;
         try {
-            serverSocket = new ServerSocket(9090);
+            serverSocket = new ServerSocket(8080);
             while (true) {
                 Socket socket = serverSocket.accept();
                 executorService.execute(new Handler(socket));
