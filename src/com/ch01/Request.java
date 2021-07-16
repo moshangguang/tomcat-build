@@ -4,46 +4,44 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class Request {
+    private static final int BUFFER_SIZE = 2048;
+    private InputStream inputStream;
+    private String uri;
 
-  private InputStream input;
-  private String uri;
-
-  public Request(InputStream input) {
-    this.input = input;
-  }
-
-  public void parse() {
-    // Read a set of characters from the socket
-    StringBuffer request = new StringBuffer(2048);
-    int i;
-    byte[] buffer = new byte[2048];
-    try {
-      i = input.read(buffer);
+    public Request(InputStream inputStream) {
+        this.inputStream = inputStream;
     }
-    catch (IOException e) {
-      e.printStackTrace();
-      i = -1;
-    }
-    for (int j=0; j<i; j++) {
-      request.append((char) buffer[j]);
-    }
-    System.out.print(request.toString());
-    uri = parseUri(request.toString());
-  }
 
-  private String parseUri(String requestString) {
-    int index1, index2;
-    index1 = requestString.indexOf(' ');
-    if (index1 != -1) {
-      index2 = requestString.indexOf(' ', index1 + 1);
-      if (index2 > index1)
-        return requestString.substring(index1 + 1, index2);
+    public void parse() {
+        StringBuffer request = new StringBuffer(2048);
+        byte[] bytes = new byte[BUFFER_SIZE];
+        int read;
+        try {
+            read = inputStream.read(bytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+            read = -1;
+        }
+        for (int i = 0; i < read; i++) {
+            request.append((char) bytes[i]);
+        }
+        uri = parseUri(request.toString());
     }
-    return null;
-  }
 
-  public String getUri() {
-    return uri;
-  }
+    private String parseUri(String request) {
+        int start, end;
+        start = request.indexOf(' ');
+        if (start == -1) {
+            return null;
+        }
+        end = request.indexOf(' ', start + 1);
+        if (end <= start) {
+            return null;
+        }
+        return request.substring(start + 1, end);
+    }
 
+    public String getUri() {
+        return uri;
+    }
 }

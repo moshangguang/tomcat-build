@@ -7,69 +7,68 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HttpServer {
 
-    /**
-     * WEB_ROOT is the directory where our HTML and other files reside.
-     * For this package, WEB_ROOT is the "webroot" directory under the working
-     * directory.
-     * The working directory is the location in the file system
-     * from where the java command was invoked.
-     */
     public static final String WEB_ROOT =
             System.getProperty("user.dir") + File.separator + "webroot";
-
-
-    // shutdown command
-    private static final String SHUTDOWN_COMMAND = "/SHUTDOWN";
-
-    // the shutdown command received
-    private boolean shutdown = false;
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public static void main(String[] args) {
-        System.out.println(WEB_ROOT);
         HttpServer server = new HttpServer();
         server.await();
     }
 
     public void await() {
         ServerSocket serverSocket = null;
-        int port = 8080;
         try {
-            serverSocket = new ServerSocket(port, 1, InetAddress.getByName("127.0.0.1"));
+            serverSocket = new ServerSocket(9090);
+            while (true) {
+                Socket socket = serverSocket.accept();
+                executorService.execute(new Handler(socket));
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(1);
+        } finally {
+            try {
+                if (serverSocket != null) {
+                    serverSocket.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    static class Handler implements Runnable {
+        private final Socket socket;
+
+        public Handler(Socket socket) {
+            this.socket = socket;
         }
 
-        // Loop waiting for a request
-        while (!shutdown) {
-            Socket socket = null;
-            InputStream input = null;
-            OutputStream output = null;
+        @Override
+        public void run() {
             try {
-                socket = serverSocket.accept();
-                input = socket.getInputStream();
-                output = socket.getOutputStream();
-
-                // create Request object and parse
-                Request request = new Request(input);
+                InputStream inputStream = socket.getInputStream();
+                OutputStream outputStream = socket.getOutputStream();
+                Request request = new Request(inputStream);
                 request.parse();
-
-                // create Response object
-                Response response = new Response(output);
+                Response response = new Response(outputStream);
                 response.setRequest(request);
                 response.sendStaticResource();
-
-                // Close the socket
-                socket.close();
-
-                //check if the previous URI is a shutdown command
-                shutdown = request.getUri().equals(SHUTDOWN_COMMAND);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 e.printStackTrace();
-                continue;
+            } finally {
+                try {
+                    if (socket != null) {
+                        socket.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
