@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -13,12 +12,12 @@ import java.util.concurrent.Executors;
 public class HttpServer {
 
     public static final String WEB_ROOT =
-            System.getProperty("user.dir") + File.separator + "webroot";
+            System.getProperty("user.dir") + File.separator + "webroot";//<1>
     private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
     public static void main(String[] args) {
         HttpServer server = new HttpServer();
-        server.await();
+        server.await();//<2>
     }
 
     public void await() {
@@ -26,8 +25,8 @@ public class HttpServer {
         try {
             serverSocket = new ServerSocket(8080);
             while (true) {
-                Socket socket = serverSocket.accept();
-                executorService.execute(new Handler(socket));
+                Socket socket = serverSocket.accept();//<3>
+                executorService.execute(new Handler(socket));//<4>
             }
         } catch (IOException e) {
             e.printStackTrace();
