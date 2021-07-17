@@ -13,11 +13,11 @@ public class Request {
     }
 
     public void parse() {
-        StringBuffer request = new StringBuffer(2048);
+        StringBuffer request = new StringBuffer(BUFFER_SIZE);
         byte[] bytes = new byte[BUFFER_SIZE];
         int read;
         try {
-            read = inputStream.read(bytes);
+            read = inputStream.read(bytes);//<1>
         } catch (IOException e) {
             e.printStackTrace();
             read = -1;
